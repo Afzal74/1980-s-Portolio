@@ -159,7 +159,7 @@ export function FlappyBirdBrowser({ onClose }: FlappyBirdBrowserProps) {
 
   return (
     <div className="flappy-browser">
-      <img ref={birdImageRef} src="/assets/Bird.gif" alt="" className="flappy-bird-preload" />
+      <img ref={birdImageRef} src="/assets/Bird.gif" alt="" className="flappy-bird-preload" decoding="async" />
       {!started ? (
         <div className="flappy-start">
           <h2>FLAPPY BIRD</h2>
@@ -169,12 +169,19 @@ export function FlappyBirdBrowser({ onClose }: FlappyBirdBrowserProps) {
         </div>
       ) : (
         <>
-          <div className="flappy-canvas-wrap" onClick={flap}>
+          <div
+            className="flappy-canvas-wrap"
+            onClick={flap}
+            onPointerDown={(e) => { e.stopPropagation(); flap(); }}
+            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); flap(); }}
+          >
             <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} aria-label="Flappy Bird game" />
             <img
               src="/assets/Bird.gif"
               alt="Flappy Bird"
               className="flappy-bird-sprite"
+              loading="lazy"
+              decoding="async"
               style={{ left: 60, top: birdY }}
             />
           </div>

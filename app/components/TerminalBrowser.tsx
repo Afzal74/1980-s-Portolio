@@ -70,14 +70,23 @@ export function TerminalBrowser({ onNavigate }: TerminalBrowserProps) {
   };
 
   return (
-    <div className="terminal-browser" onPointerDown={(event) => event.stopPropagation()}>
+    <div
+      className="terminal-browser"
+      onPointerDown={(event) => event.stopPropagation()}
+      onTouchStart={(event) => event.stopPropagation()}
+    >
       <div ref={terminalRef} className="terminal-output" aria-live="polite">
         {lines.map((line, index) => (
           <div className={`terminal-line ${line.kind}`} key={`${line.text}-${index}`}>{line.text}</div>
         ))}
         <span className="terminal-caret" aria-hidden="true">▋</span>
       </div>
-      <form className="terminal-prompt" onSubmit={handleSubmit}>
+      <form
+        className="terminal-prompt"
+        onSubmit={handleSubmit}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <span aria-hidden="true">$</span>
         <input
           ref={inputRef}
@@ -88,6 +97,7 @@ export function TerminalBrowser({ onNavigate }: TerminalBrowserProps) {
           spellCheck={false}
           autoFocus
           onClick={(event) => event.currentTarget.focus()}
+          onTouchEnd={(event) => event.currentTarget.focus()}
         />
       </form>
     </div>

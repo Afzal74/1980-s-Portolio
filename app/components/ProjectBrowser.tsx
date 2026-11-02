@@ -17,7 +17,7 @@ export function ProjectBrowser({ projects, activeProject, onSelect }: ProjectBro
             key={project.id}
             onClick={() => onSelect(index)}
           >
-            <img src={project.image} alt="" />
+            <img src={project.image} alt="" loading="lazy" decoding="async" />
             <span>project-{index + 1}.png</span>
           </button>
         ))}

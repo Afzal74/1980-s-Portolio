@@ -113,36 +113,9 @@ function resolveOverlap(
   return desired;
 }
 
-// ── mobile dock ───────────────────────────────────────────────────────────────
-
-function MobileDock({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
-  return (
-    <nav className="mobile-dock" aria-label="App icons">
-      {ICON_DEFS.map(({ section, className, label, iconClass }) => (
-        <button
-          key={section}
-          className={`mobile-dock-icon ${className}`}
-          type="button"
-          aria-label={label}
-          onDoubleClick={() => onOpen(section)}
-          onClick={() => onOpen(section)}
-        >
-          <span className={iconClass} aria-hidden="true" />
-          <span className="mobile-dock-label">{label}</span>
-        </button>
-      ))}
-    </nav>
-  );
-}
-
-// ── component ─────────────────────────────────────────────────────────────────
-
 export function DesktopIcons({ onOpen }: DesktopIconsProps) {
-  // Always use the desktop-style icon grid — mobile scaling is handled via CSS
   return <DesktopIconGrid onOpen={onOpen} />;
 }
-
-// ── desktop icon grid (extracted so mobile path is clean) ─────────────────────
 
 function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
   const [positions, setPositions] = useState<Record<ActiveSection, IconPosition>>(initialPositions);
@@ -157,7 +130,13 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
   useEffect(() => { positionsRef.current = positions; }, [positions]);
 
   const dragState = useRef<{
-    items: { section: ActiveSection; offsetX: number; offsetY: number }[];
+    startX: number;
+    startY: number;
+    isRotated: boolean;
+    scale: number;
+    deskW: number;
+    deskH: number;
+    items: { section: ActiveSection; originX: number; originY: number }[];
     moved: boolean;
   } | null>(null);
 
@@ -166,7 +145,7 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
   const handleIconPointerDown = useCallback(
     (e: PointerEvent<HTMLButtonElement>, section: ActiveSection) => {
       e.stopPropagation();
-      if (e.button !== 0) return;
+      if (e.button !== 0 && e.pointerType === "mouse") return;
       const desktop = desktopRef.current;
       if (!desktop) return;
 
@@ -182,13 +161,25 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
       selectedRef.current = nextSelected;
       setSelected(new Set(nextSelected));
 
-      const bounds = desktop.getBoundingClientRect();
+      const isRotated = typeof window !== "undefined" && window.matchMedia("(max-width: 700px) and (orientation: portrait)").matches;
+      const isLandscapePhone = typeof window !== "undefined" && window.matchMedia("(max-width: 900px) and (max-height: 500px) and (orientation: landscape)").matches;
+      const scale = isRotated ? 0.45 : (isLandscapePhone ? 0.55 : (window.innerWidth <= 700 ? 0.65 : 1));
+
+      const deskW = isRotated ? window.innerHeight : (desktop.clientWidth || window.innerWidth) / scale;
+      const deskH = isRotated ? (window.innerWidth - 32) : (desktop.clientHeight || (window.innerHeight - 38)) / scale;
+
       const snap = positionsRef.current;
       dragState.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        isRotated,
+        scale,
+        deskW,
+        deskH,
         items: [...nextSelected].map(sec => ({
           section: sec,
-          offsetX: e.clientX - bounds.left - snap[sec].x,
-          offsetY: e.clientY - bounds.top  - snap[sec].y,
+          originX: snap[sec].x,
+          originY: snap[sec].y,
         })),
         moved: false,
       };
@@ -200,16 +191,31 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
     (e: PointerEvent<HTMLButtonElement>) => {
       const ds = dragState.current;
       if (!ds) return;
-      const desktop = desktopRef.current;
-      if (!desktop) return;
+
+      const rawDx = e.clientX - ds.startX;
+      const rawDy = e.clientY - ds.startY;
+
+      // Tap vs Drag threshold
+      if (!ds.moved && Math.hypot(rawDx, rawDy) < 6) return;
       ds.moved = true;
-      const bounds = desktop.getBoundingClientRect();
+
+      // Coordinate transform for rotated portrait mobile mode
+      let deltaX = rawDx;
+      let deltaY = rawDy;
+      if (ds.isRotated) {
+        deltaX = rawDy;
+        deltaY = -rawDx;
+      }
+
+      deltaX = deltaX / ds.scale;
+      deltaY = deltaY / ds.scale;
+
       setPositions(prev => {
         const next = { ...prev };
-        for (const { section, offsetX, offsetY } of ds.items) {
+        for (const { section, originX, originY } of ds.items) {
           next[section] = {
-            x: clamp(Math.round(e.clientX - bounds.left - offsetX), 0, bounds.width  - ICON_W),
-            y: clamp(Math.round(e.clientY - bounds.top  - offsetY), 0, bounds.height - ICON_H),
+            x: clamp(Math.round(originX + deltaX), 0, ds.deskW - ICON_W),
+            y: clamp(Math.round(originY + deltaY), 0, ds.deskH - ICON_H),
           };
         }
         return next;
@@ -223,12 +229,25 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
       if (!ds) return;
       const wasMoved = ds.moved;
       dragState.current = null;
-      if (!wasMoved && !e.ctrlKey && !e.metaKey) {
-        selectedRef.current = new Set([section]);
-        setSelected(new Set([section]));
+
+      if (!wasMoved) {
+        // Tapped without dragging: On mobile / touch, open the window directly!
+        const isMobileOrTouch = e.pointerType === "touch" || (typeof window !== "undefined" && (window.innerWidth <= 900 || window.innerHeight <= 500));
+        if (isMobileOrTouch) {
+          selectedRef.current = new Set([section]);
+          setSelected(new Set([section]));
+          onOpen(section);
+          return;
+        }
+
+        if (!e.ctrlKey && !e.metaKey) {
+          selectedRef.current = new Set([section]);
+          setSelected(new Set([section]));
+        }
         return;
       }
-      if (!wasMoved) return;
+
+      // If dragged, resolve overlaps cleanly
       const desktop = desktopRef.current;
       if (!desktop) return;
       const { width: dw, height: dh } = desktop.getBoundingClientRect();
@@ -240,7 +259,7 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
         }
         return next;
       });
-    }, [],
+    }, [onOpen],
   );
 
   const handleDesktopPointerDown = useCallback(
@@ -326,6 +345,12 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
             onPointerUp={e => handleIconPointerUp(e, section)}
             onPointerCancel={e => handleIconPointerUp(e, section)}
             onDoubleClick={() => onOpen(section)}
+            onClick={() => {
+              // Click fallback for touch devices
+              if (typeof window !== "undefined" && (window.innerWidth <= 900 || window.innerHeight <= 500)) {
+                onOpen(section);
+              }
+            }}
             onKeyDown={e => handleIconKeyDown(e, section)}
           >
             <span className={iconClass} aria-hidden="true" />

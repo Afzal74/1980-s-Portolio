@@ -38,11 +38,21 @@ export function ContactBrowser({ onClose }: ContactBrowserProps) {
   };
 
   return (
-    <div className="contact-browser">
+    <div
+      className="contact-browser"
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
       <h1 className="contact-heading">CONTACT ME</h1>
       <p className="contact-desc">Got something to say? Drop a message and I'll get back to you.</p>
 
-      <form onSubmit={handleSubmit} className="contact-form" noValidate>
+      <form
+        onSubmit={handleSubmit}
+        className="contact-form"
+        noValidate
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <input
           type="text"
           required

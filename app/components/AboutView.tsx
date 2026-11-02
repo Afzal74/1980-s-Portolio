@@ -38,7 +38,16 @@ export function AboutView({
               </g>
             </svg>
           ) : (
-            <img ref={characterRef} className="character sleep-character" src="/assets/sleep.png" alt="Sleeping illustrated character" />
+            <img
+              ref={characterRef}
+              className="character sleep-character"
+              src="/assets/sleep.png"
+              alt="Sleeping illustrated character"
+              width={350}
+              height={326}
+              fetchPriority="high"
+              decoding="async"
+            />
           )}
         </div>
         <div className="profile-copy">

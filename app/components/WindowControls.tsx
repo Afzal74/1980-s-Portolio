@@ -5,9 +5,18 @@ type WindowControlsProps = {
 
 export function WindowControls({ onMinimize, onClose }: WindowControlsProps) {
   return (
-    <div className="controls" aria-label="Window controls">
-      <button className="control minimize" aria-label="Minimize" type="button" onClick={onMinimize}><span /></button>
-      <button className="control close" aria-label="Close" type="button" onClick={onClose}><span /></button>
+    <div
+      className="controls"
+      aria-label="Window controls"
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <button className="control minimize" aria-label="Minimize" type="button" onClick={onMinimize}>
+        <span />
+      </button>
+      <button className="control close" aria-label="Close" type="button" onClick={onClose}>
+        <span />
+      </button>
     </div>
   );
 }
