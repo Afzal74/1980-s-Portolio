@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import gsap from "gsap";
 import { AboutView } from "./components/AboutView";
 import { AchievementBrowser } from "./components/AchievementBrowser";
@@ -38,6 +38,31 @@ const projects: Project[] = [
     desc: "",
   },
 ];
+const preloadAssets = [
+  "/assets/background.png",
+  "/assets/background2.png",
+  "/assets/background3.png",
+  "/assets/background4.png",
+  "/assets/black blue border.png",
+  "/assets/sleep.png",
+  "/assets/wake.png",
+  "/assets/Project/Project(before).png",
+  "/assets/Project/Project(after).png",
+  "/assets/achievements/ach1.png",
+  "/assets/achievements/ach2.png",
+  "/assets/terminal/terminal 1.png",
+  "/assets/terminal/terminal 2.png",
+  "/assets/flappy bird/bird1.png",
+  "/assets/flappy bird/bird2.png",
+  "/assets/Bird.gif",
+  "/assets/music/music1.png",
+  "/assets/music/music2.png",
+  "/assets/contact/c1.png",
+  "/assets/contact/c2.png",
+  "/assets/sytem error.png",
+  "/assets/ok button.png",
+  "/assets/cancel button.png",
+];
 
 export default function Home() {
   const windowRef = useRef<HTMLDivElement>(null);
@@ -69,6 +94,16 @@ export default function Home() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
   const [hasSplashPermission, setHasSplashPermission] = useState(false);
   const [isSplashExiting, setIsSplashExiting] = useState(false);
+
+  useEffect(() => {
+    const images = preloadAssets.map((src) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = src;
+      return image;
+    });
+    return () => images.forEach((image) => image.onload = null);
+  }, []);
 
   const finishSplash = () => {
     setIsSplashExiting(true);
