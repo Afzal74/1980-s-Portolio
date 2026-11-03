@@ -7,12 +7,15 @@ import { AchievementBrowser } from "./components/AchievementBrowser";
 import { DesktopIcons } from "./components/DesktopIcons";
 import { ProjectBrowser } from "./components/ProjectBrowser";
 import { Taskbar } from "./components/Taskbar";
+import { RoboDecoration } from "./components/RoboDecoration";
 import { TerminalBrowser } from "./components/TerminalBrowser";
 import { FlappyBirdBrowser } from "./components/FlappyBirdBrowser";
 import { MusicBrowser } from "./components/MusicBrowser";
 import { ContactBrowser } from "./components/ContactBrowser";
+import { RatingBrowser } from "./components/RatingBrowser";
 import { VirusOverlay } from "./components/VirusOverlay";
 import { WindowControls } from "./components/WindowControls";
+import { Chatbot } from "./components/Chatbot";
 import type { ActiveSection, Project } from "./components/types";
 
 const projects: Project[] = [
@@ -94,6 +97,7 @@ export default function Home() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
   const [hasSplashPermission, setHasSplashPermission] = useState(false);
   const [isSplashExiting, setIsSplashExiting] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   useEffect(() => {
     const images = preloadAssets.map((src) => {
@@ -244,7 +248,7 @@ export default function Home() {
     setActiveSection(section);
     setIsWindowOpen(true);
     setRecentSections((sections) =>
-      sections.filter((recent) => recent !== section),
+      [...sections.filter((recent) => recent !== section), section],
     );
   };
 
@@ -296,7 +300,12 @@ export default function Home() {
         autoAlpha: 0,
         duration: 0.4,
         ease: "power2.in",
-        onComplete: () => setIsWindowOpen(false),
+        onComplete: () => {
+          setIsWindowOpen(false);
+          setRecentSections((sections) =>
+            sections.filter((recent) => recent !== activeSection),
+          );
+        },
       });
     });
   };
@@ -313,7 +322,7 @@ export default function Home() {
       if (!windowElement || !taskbarEntry) {
         isRestoringRef.current = false;
         setRecentSections((sections) =>
-          sections.filter((recent) => recent !== section),
+          [...sections.filter((recent) => recent !== section), section],
         );
         return;
       }
@@ -345,7 +354,7 @@ export default function Home() {
         onComplete: () => {
           isRestoringRef.current = false;
           setRecentSections((sections) =>
-            sections.filter((recent) => recent !== section),
+            [...sections.filter((recent) => recent !== section), section],
           );
         },
       });
@@ -434,6 +443,8 @@ export default function Home() {
           )}
         </div>
       )}
+      <RoboDecoration onChatOpen={() => setIsChatbotOpen(true)} />
+      {isChatbotOpen && <Chatbot onClose={() => setIsChatbotOpen(false)} />}
       <DesktopIcons onOpen={openWindow} />
       {isVirusOpen && (
         <VirusOverlay
@@ -444,7 +455,7 @@ export default function Home() {
       {isWindowOpen && (
         <section
           ref={windowRef}
-          className={`portfolio-window ${activeSection === "about" ? "about-window" : activeSection === "terminal" ? "terminal-window" : activeSection === "flappy" ? "flappy-window" : activeSection === "music" ? "music-window" : activeSection === "contact" ? "contact-window" : "projects-window"}`}
+          className={`portfolio-window ${activeSection === "about" ? "about-window" : activeSection === "terminal" ? "terminal-window" : activeSection === "flappy" ? "flappy-window" : activeSection === "music" ? "music-window" : activeSection === "contact" ? "contact-window" : activeSection === "rating" ? "rating-window" : "projects-window"}`}
         >
           <header
             className="title-bar project-title-bar"
@@ -467,6 +478,8 @@ export default function Home() {
                           ? "Royalty Free Music Player"
                           : activeSection === "contact"
                             ? "Contact Me"
+                            : activeSection === "rating"
+                              ? "Rating"
                             : "About"}
               </h1>
             </div>
@@ -494,6 +507,8 @@ export default function Home() {
               <MusicBrowser onClose={closeWindow} />
             ) : activeSection === "contact" ? (
               <ContactBrowser onClose={closeWindow} />
+            ) : activeSection === "rating" ? (
+              <RatingBrowser />
             ) : (
               <AboutView
                 characterRef={characterRef}

@@ -43,8 +43,35 @@ const initialPositions: Record<ActiveSection, IconPosition> = {
   achievements: { x: COL1, y: ROW1 },
   music:        { x: COL0, y: ROW2 },
   contact:      { x: COL0, y: ROW3 },
-  flappy:       { x: COL0, y: ROW4 },
+  rating:       { x: COL0, y: ROW4 },
+  flappy:       { x: COL1, y: ROW2 },
 };
+
+function getResponsivePositions(isCompact: boolean): Record<ActiveSection, IconPosition> {
+  if (!isCompact) return initialPositions;
+  return {
+    terminal:     { x: COL0, y: ROW0 },
+    about:        { x: COL1, y: ROW0 },
+    projects:     { x: COL0, y: ROW1 },
+    achievements: { x: COL1, y: ROW1 },
+    music:        { x: COL0, y: ROW2 },
+    contact:      { x: COL0, y: ROW3 },
+    rating:       { x: COL1, y: ROW3 },
+    flappy:       { x: COL1, y: ROW2 },
+  };
+}
+
+function fitPositionsToDesktop(
+  positions: Record<ActiveSection, IconPosition>,
+  desktopHeight: number,
+): Record<ActiveSection, IconPosition> {
+  const maxTop = Math.max(0, desktopHeight - ICON_H - 8);
+  const next = { ...positions };
+  if (next.flappy.y > maxTop) {
+    next.flappy = { x: COL1, y: Math.min(ROW2, maxTop) };
+  }
+  return next;
+}
 
 const ICON_DEFS: {
   section: ActiveSection;
@@ -59,6 +86,7 @@ const ICON_DEFS: {
   { section: "flappy",       className: "flappy-icon",       label: "Flappy Bird",  iconClass: "flappy-icon-image"      },
   { section: "music",        className: "music-icon",        label: "Music",        iconClass: "music-icon-image"       },
   { section: "contact",      className: "contact-icon",      label: "Contact Me",   iconClass: "contact-icon-image"     },
+  { section: "rating",       className: "rating-icon",       label: "Rating",       iconClass: "rating-icon-image"     },
 ];
 
 // ── geometry helpers ──────────────────────────────────────────────────────────
@@ -125,9 +153,25 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
   const desktopRef  = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<Set<ActiveSection>>(selected);
   const positionsRef = useRef<Record<ActiveSection, IconPosition>>(positions);
+  const hasCustomLayoutRef = useRef(false);
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => { positionsRef.current = positions; }, [positions]);
+
+  useEffect(() => {
+    const updateResponsivePositions = () => {
+      if (hasCustomLayoutRef.current) return;
+      const isCompact = window.innerWidth <= 900 || window.innerHeight <= 700;
+      const desktop = desktopRef.current;
+      const desktopHeight = desktop?.clientHeight || window.innerHeight - 38;
+      const next = fitPositionsToDesktop(getResponsivePositions(isCompact), desktopHeight);
+      positionsRef.current = next;
+      setPositions(next);
+    };
+    updateResponsivePositions();
+    window.addEventListener("resize", updateResponsivePositions);
+    return () => window.removeEventListener("resize", updateResponsivePositions);
+  }, []);
 
   const dragState = useRef<{
     startX: number;
@@ -198,6 +242,7 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
       // Tap vs Drag threshold
       if (!ds.moved && Math.hypot(rawDx, rawDy) < 6) return;
       ds.moved = true;
+      hasCustomLayoutRef.current = true;
 
       // Coordinate transform for rotated portrait mobile mode
       let deltaX = rawDx;

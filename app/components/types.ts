@@ -6,4 +6,4 @@ export type Project = {
   desc: string;
 };
 
-export type ActiveSection = "about" | "achievements" | "projects" | "terminal" | "flappy" | "music" | "contact";
+export type ActiveSection = "about" | "achievements" | "projects" | "terminal" | "flappy" | "music" | "contact" | "rating";

@@ -57,7 +57,7 @@ export function Taskbar({ recentSections, onRestore }: TaskbarProps) {
           {recentSections.map((section) => (
             <button className="taskbar-recent" data-section={section} type="button" key={section} onClick={() => onRestore(section)}>
               <span className="taskbar-recent-icon" aria-hidden="true">{section === "terminal" ? ">_" : section === "flappy" ? "★" : section === "music" ? "♫" : section === "contact" ? "✉" : "◉"}</span>
-              <span>{section === "projects" ? "Project Explorer" : section === "achievements" ? "Achievements" : section === "terminal" ? "Terminal" : section === "flappy" ? "Flappy Bird" : section === "music" ? "Music Player" : section === "contact" ? "Contact Me" : "About"}</span>
+              <span>{section === "projects" ? "Project Explorer" : section === "achievements" ? "Achievements" : section === "terminal" ? "Terminal" : section === "flappy" ? "Flappy Bird" : section === "music" ? "Music Player" : section === "contact" ? "Contact Me" : section === "rating" ? "Rating" : "About"}</span>
             </button>
           ))}
         </div>
