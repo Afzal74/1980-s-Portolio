@@ -39,9 +39,17 @@ export function RatingBrowser() {
 
   useEffect(() => {
     if (!userId) return;
+    if (!supabase) {
+      setStatus({
+        type: "error",
+        message: "Ratings are unavailable because Supabase is not configured.",
+      });
+      return;
+    }
+    const client = supabase;
     let active = true;
     const loadRatings = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("ratings")
         .select("id,name,message,rating,color,pasted,user_id,created_at")
         .eq("pasted", true)
@@ -64,6 +72,13 @@ export function RatingBrowser() {
 
   const submitRating = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!supabase) {
+      setStatus({
+        type: "error",
+        message: "Ratings are unavailable because Supabase is not configured.",
+      });
+      return;
+    }
     if (!selectedRating || isSubmitting || userHasRating || !userId) return;
     setIsSubmitting(true);
     setStatus({ type: "idle", message: "" });
@@ -105,7 +120,7 @@ export function RatingBrowser() {
   };
 
   const deleteRating = async (card: RatingRow) => {
-    if (!userId || card.user_id !== userId || deletingId !== null) return;
+    if (!supabase || !userId || card.user_id !== userId || deletingId !== null) return;
     setDeletingId(card.id);
     setStatus({ type: "idle", message: "" });
     const { error } = await supabase

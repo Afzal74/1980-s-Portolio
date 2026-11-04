@@ -68,7 +68,7 @@ const preloadAssets = [
 ];
 
 export default function Home() {
-  const windowRef = useRef<HTMLDivElement>(null);
+  const windowRefs = useRef(new Map<ActiveSection, HTMLElement>());
   const splashVideoRef = useRef<HTMLVideoElement>(null);
   const characterRef = useRef<HTMLImageElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -77,6 +77,7 @@ export default function Home() {
   const eyeOverlayRef = useRef<SVGSVGElement>(null);
   const isRestoringRef = useRef(false);
   const windowDragRef = useRef<{
+    section: ActiveSection;
     pointerId: number;
     startClientX: number;
     startClientY: number;
@@ -88,6 +89,7 @@ export default function Home() {
   } | null>(null);
   const [isCharacterHovered, setIsCharacterHovered] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>("about");
+  const [openSections, setOpenSections] = useState<ActiveSection[]>([]);
   const [activeProject, setActiveProject] = useState(0);
   const [activeAchievement, setActiveAchievement] = useState(0);
   const [isVirusOpen, setIsVirusOpen] = useState(false);
@@ -129,12 +131,13 @@ export default function Home() {
   };
 
   useLayoutEffect(() => {
-    if (!isWindowOpen || !windowRef.current) return;
+    const windowElement = windowRefs.current.get(activeSection);
+    if (!isWindowOpen || !windowElement) return;
     if (isRestoringRef.current) return;
     const context = gsap.context(() => {
       const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
       intro.fromTo(
-        windowRef.current,
+        windowElement,
         { autoAlpha: 0, scale: 0.85, y: 20 },
         { autoAlpha: 1, scale: 1, y: 0, duration: 0.8 },
       );
@@ -172,9 +175,9 @@ export default function Home() {
           yoyo: true,
         });
       }
-    }, windowRef);
+    }, windowElement);
     return () => context.revert();
-  }, [activeSection, isWindowOpen]);
+  }, [isWindowOpen]);
 
   useLayoutEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -246,24 +249,26 @@ export default function Home() {
 
   const openWindow = (section: ActiveSection) => {
     setActiveSection(section);
+    setOpenSections((sections) => sections.includes(section) ? sections : [...sections, section]);
+    setRecentSections((sections) => [
+      ...sections.filter((recent) => recent !== section),
+      section,
+    ]);
     setIsWindowOpen(true);
-    setRecentSections((sections) =>
-      [...sections.filter((recent) => recent !== section), section],
-    );
   };
 
-  const minimizeWindow = () => {
+  const minimizeWindow = (section = activeSection) => {
     setRecentSections((sections) => [
-      ...sections.filter((recent) => recent !== activeSection),
-      activeSection,
+      ...sections.filter((recent) => recent !== section),
+      section,
     ]);
-    requestAnimationFrame(() => {
-      const windowElement = windowRef.current;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const windowElement = windowRefs.current.get(section);
       const taskbarEntry = document.querySelector<HTMLElement>(
-        `.taskbar-recent[data-section="${activeSection}"]`,
+        `.taskbar-recent[data-section="${section}"]`,
       );
       if (!windowElement || !taskbarEntry) {
-        setIsWindowOpen(false);
+        removeWindow(section);
         return;
       }
 
@@ -282,16 +287,29 @@ export default function Home() {
         autoAlpha: 0,
         duration: 0.4,
         ease: "power2.in",
-        onComplete: () => setIsWindowOpen(false),
+        onComplete: () => removeWindow(section),
       });
+    }));
+  };
+
+  const removeWindow = (section: ActiveSection) => {
+    windowRefs.current.delete(section);
+    setOpenSections((sections) => {
+      const next = sections.filter((openSection) => openSection !== section);
+      setIsWindowOpen(next.length > 0);
+      if (section === activeSection && next.length > 0) {
+        setActiveSection(next[next.length - 1]);
+      }
+      return next;
     });
   };
 
-  const closeWindow = () => {
+  const closeWindow = (section = activeSection) => {
     requestAnimationFrame(() => {
-      const windowElement = windowRef.current;
+      const windowElement = windowRefs.current.get(section);
       if (!windowElement) {
-        setIsWindowOpen(false);
+        removeWindow(section);
+        setRecentSections((sections) => sections.filter((recent) => recent !== section));
         return;
       }
 
@@ -301,9 +319,9 @@ export default function Home() {
         duration: 0.4,
         ease: "power2.in",
         onComplete: () => {
-          setIsWindowOpen(false);
+          removeWindow(section);
           setRecentSections((sections) =>
-            sections.filter((recent) => recent !== activeSection),
+            sections.filter((recent) => recent !== section),
           );
         },
       });
@@ -313,9 +331,10 @@ export default function Home() {
   const restoreWindow = (section: ActiveSection) => {
     isRestoringRef.current = true;
     setActiveSection(section);
+    setOpenSections((sections) => sections.includes(section) ? sections : [...sections, section]);
     setIsWindowOpen(true);
     requestAnimationFrame(() => {
-      const windowElement = windowRef.current;
+      const windowElement = windowRefs.current.get(section);
       const taskbarEntry = document.querySelector<HTMLElement>(
         `.taskbar-recent[data-section="${section}"]`,
       );
@@ -361,21 +380,20 @@ export default function Home() {
     });
   };
 
-  const handleWindowPointerDown = (event: PointerEvent<HTMLElement>) => {
-    if (
-      !windowRef.current ||
-      (event.target as HTMLElement).closest(".controls")
-    )
+  const handleWindowPointerDown = (event: PointerEvent<HTMLElement>, section: ActiveSection) => {
+    if ((event.target as HTMLElement).closest(".controls"))
       return;
     const desktop = event.currentTarget.closest<HTMLElement>(".desktop");
     if (!desktop) return;
-    const windowElement = windowRef.current;
+    const windowElement = windowRefs.current.get(section);
+    if (!windowElement) return;
     const isRotated =
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 700px) and (orientation: portrait)")
         .matches;
 
     windowDragRef.current = {
+      section,
       pointerId: event.pointerId,
       startClientX: event.clientX,
       startClientY: event.clientY,
@@ -390,9 +408,10 @@ export default function Home() {
 
   const handleWindowPointerMove = (event: PointerEvent<HTMLElement>) => {
     const drag = windowDragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId || !windowRef.current)
+    if (!drag || drag.pointerId !== event.pointerId)
       return;
-    const windowElement = windowRef.current;
+    const windowElement = windowRefs.current.get(drag.section);
+    if (!windowElement) return;
 
     const rawDx = event.clientX - drag.startClientX;
     const rawDy = event.clientY - drag.startClientY;
@@ -400,10 +419,21 @@ export default function Home() {
     // In rotated 90deg portrait mode, desktop +X is screen +Y, desktop +Y is screen -X
     const deltaX = drag.isRotated ? rawDy : rawDx;
     const deltaY = drag.isRotated ? -rawDx : rawDy;
+    const desktopBounds = document.querySelector<HTMLElement>(".desktop")?.getBoundingClientRect();
+    if (!desktopBounds) return;
+    const windowBounds = windowElement.getBoundingClientRect();
+    const currentX = Number(gsap.getProperty(windowElement, "x"));
+    const currentY = Number(gsap.getProperty(windowElement, "y"));
+    const nextX = drag.startX + deltaX;
+    const nextY = drag.startY + deltaY;
+    const minX = desktopBounds.left - windowBounds.left + currentX;
+    const maxX = desktopBounds.right - windowBounds.right + currentX;
+    const minY = desktopBounds.top - windowBounds.top + currentY;
+    const maxY = desktopBounds.bottom - windowBounds.bottom + currentY;
 
     gsap.set(windowElement, {
-      x: drag.startX + deltaX,
-      y: drag.startY + deltaY,
+      x: Math.max(minX, Math.min(maxX, nextX)),
+      y: Math.max(minY, Math.min(maxY, nextY)),
     });
   };
 
@@ -452,62 +482,76 @@ export default function Home() {
           onAction={() => setErrorCount((count) => count + 1)}
         />
       )}
-      {isWindowOpen && (
+      {isWindowOpen && openSections.map((section, windowIndex) => (
         <section
-          ref={windowRef}
-          className={`portfolio-window ${activeSection === "about" ? "about-window" : activeSection === "terminal" ? "terminal-window" : activeSection === "flappy" ? "flappy-window" : activeSection === "music" ? "music-window" : activeSection === "contact" ? "contact-window" : activeSection === "rating" ? "rating-window" : "projects-window"}`}
+          key={section}
+          ref={(element) => {
+            if (element) windowRefs.current.set(section, element);
+            else windowRefs.current.delete(section);
+          }}
+          style={{ zIndex: 30 + windowIndex }}
+          className={`portfolio-window ${section === "about" ? "about-window" : section === "terminal" ? "terminal-window" : section === "flappy" ? "flappy-window" : section === "music" ? "music-window" : section === "contact" ? "contact-window" : section === "rating" ? "rating-window" : "projects-window"}`}
+          onPointerDown={() => {
+            setActiveSection(section);
+          }}
         >
           <header
             className="title-bar project-title-bar"
-            onPointerDown={handleWindowPointerDown}
+            onPointerDown={(event) => {
+              setActiveSection(section);
+              handleWindowPointerDown(event, section);
+            }}
             onPointerMove={handleWindowPointerMove}
             onPointerUp={stopWindowDragging}
             onPointerCancel={stopWindowDragging}
           >
             <div className="title-bar-spacer">
               <h1 className="project-window-title">
-                {activeSection === "projects"
+                {section === "projects"
                   ? "Project Explorer"
-                  : activeSection === "achievements"
+                  : section === "achievements"
                     ? "Achievements"
-                    : activeSection === "terminal"
+                    : section === "terminal"
                       ? "Terminal"
-                      : activeSection === "flappy"
+                      : section === "flappy"
                         ? "Flappy Bird"
-                        : activeSection === "music"
+                        : section === "music"
                           ? "Royalty Free Music Player"
-                          : activeSection === "contact"
+                          : section === "contact"
                             ? "Contact Me"
-                            : activeSection === "rating"
+                            : section === "rating"
                               ? "Rating"
                             : "About"}
               </h1>
             </div>
-            <WindowControls onMinimize={minimizeWindow} onClose={closeWindow} />
+            <WindowControls
+              onMinimize={() => minimizeWindow(section)}
+              onClose={() => closeWindow(section)}
+            />
           </header>
           <div
-            className={`window-body ${activeSection !== "about" && activeSection !== "terminal" && activeSection !== "flappy" && activeSection !== "music" && activeSection !== "contact" ? "projects-window-body" : ""}`}
+            className={`window-body ${section !== "about" && section !== "terminal" && section !== "flappy" && section !== "music" && section !== "contact" ? "projects-window-body" : ""}`}
           >
-            {activeSection === "projects" ? (
+            {section === "projects" ? (
               <ProjectBrowser
                 projects={projects}
                 activeProject={activeProject}
                 onSelect={setActiveProject}
               />
-            ) : activeSection === "achievements" ? (
+            ) : section === "achievements" ? (
               <AchievementBrowser
                 activeAchievement={activeAchievement}
                 onSelect={setActiveAchievement}
               />
-            ) : activeSection === "terminal" ? (
+            ) : section === "terminal" ? (
               <TerminalBrowser onNavigate={openWindow} />
-            ) : activeSection === "flappy" ? (
-              <FlappyBirdBrowser onClose={closeWindow} />
-            ) : activeSection === "music" ? (
-              <MusicBrowser onClose={closeWindow} />
-            ) : activeSection === "contact" ? (
-              <ContactBrowser onClose={closeWindow} />
-            ) : activeSection === "rating" ? (
+            ) : section === "flappy" ? (
+              <FlappyBirdBrowser onClose={() => closeWindow(section)} />
+            ) : section === "music" ? (
+              <MusicBrowser onClose={() => closeWindow(section)} />
+            ) : section === "contact" ? (
+              <ContactBrowser onClose={() => closeWindow(section)} />
+            ) : section === "rating" ? (
               <RatingBrowser />
             ) : (
               <AboutView
@@ -522,7 +566,7 @@ export default function Home() {
             )}
           </div>
         </section>
-      )}
+      ))}
       <Taskbar recentSections={recentSections} onRestore={restoreWindow} />
       {/* Custom pixel-art arrow cursor */}
       <svg
