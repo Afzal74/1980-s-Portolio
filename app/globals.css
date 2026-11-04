@@ -1998,8 +1998,8 @@ h1 {
   }
 
   .portfolio-window {
-    width: min(calc(100vw - 30px), 540px) !important;
-    height: min(calc(100vh - 36px), 280px) !important;
+    width: min(calc(100vw - 24px), 500px) !important;
+    height: min(calc(100vh - 30px), 250px) !important;
     margin: auto;
     box-shadow:
       2px 4px 14px rgba(0, 0, 0, 0.65),
@@ -2007,33 +2007,33 @@ h1 {
   }
 
   .portfolio-window.about-window {
-    width: min(calc(100vw - 30px), 530px) !important;
-    height: min(calc(100vh - 36px), 260px) !important;
+    width: min(calc(100vw - 24px), 490px) !important;
+    height: min(calc(100vh - 30px), 235px) !important;
   }
 
   .portfolio-window.projects-window {
-    width: min(calc(100vw - 30px), 480px) !important;
-    height: min(calc(100vh - 36px), 235px) !important;
+    width: min(calc(100vw - 24px), 450px) !important;
+    height: min(calc(100vh - 30px), 215px) !important;
   }
 
   .portfolio-window.terminal-window {
-    width: min(calc(100vw - 30px), 510px) !important;
-    height: min(calc(100vh - 36px), 250px) !important;
+    width: min(calc(100vw - 24px), 475px) !important;
+    height: min(calc(100vh - 30px), 230px) !important;
   }
 
   .portfolio-window.flappy-window {
-    width: min(calc(100vw - 30px), 430px) !important;
-    height: min(calc(100vh - 36px), 275px) !important;
+    width: min(calc(100vw - 24px), 400px) !important;
+    height: min(calc(100vh - 30px), 245px) !important;
   }
 
   .portfolio-window.music-window {
-    width: min(calc(100vw - 30px), 410px) !important;
-    height: min(calc(100vh - 36px), 175px) !important;
+    width: min(calc(100vw - 24px), 380px) !important;
+    height: min(calc(100vh - 30px), 160px) !important;
   }
 
   .portfolio-window.contact-window {
-    width: min(calc(100vw - 30px), 490px) !important;
-    height: min(calc(100vh - 36px), 275px) !important;
+    width: min(calc(100vw - 24px), 455px) !important;
+    height: min(calc(100vh - 30px), 245px) !important;
   }
 
   /* Compact Title Bar */
@@ -2332,8 +2332,8 @@ h1 {
 
   /* Window sizing in rotated landscape */
   .portfolio-window {
-    width: min(calc(100vh - 40px), 520px) !important;
-    height: min(calc(100vw - 44px), 275px) !important;
+    width: min(calc(100vh - 32px), 500px) !important;
+    height: min(calc(100vw - 36px), 250px) !important;
     margin: auto;
     box-shadow:
       2px 4px 14px rgba(0, 0, 0, 0.65),
@@ -2341,8 +2341,8 @@ h1 {
   }
 
   .portfolio-window.about-window {
-    width: min(calc(100vh - 40px), 510px) !important;
-    height: min(calc(100vw - 44px), 255px) !important;
+    width: min(calc(100vh - 32px), 480px) !important;
+    height: min(calc(100vw - 36px), 235px) !important;
   }
 
   .portfolio-window.projects-window {

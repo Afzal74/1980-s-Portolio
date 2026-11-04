@@ -139,6 +139,19 @@ export default function Home() {
         // Fullscreen can be denied while audio can still be enabled.
       }
     }
+    const orientation = screen.orientation as ScreenOrientation & {
+      lock?: (orientation: "landscape") => Promise<void>;
+    };
+    if (
+      typeof orientation.lock === "function" &&
+      window.matchMedia("(max-width: 700px)").matches
+    ) {
+      try {
+        await orientation.lock("landscape");
+      } catch {
+        // Orientation lock is unavailable on some mobile browsers.
+      }
+    }
     video.muted = false;
     await video.play();
   };
