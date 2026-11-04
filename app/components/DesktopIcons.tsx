@@ -9,6 +9,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import type { ActiveSection } from "./types";
+import { playSnoreSound, playWakeSound } from "../lib/aboutAudio";
 
 type DesktopIconsProps = {
   onOpen: (section: ActiveSection) => void;
@@ -35,6 +36,18 @@ const ROW1 = 158;
 const ROW2 = 312;
 const ROW3 = 466;
 const ROW4 = 620;
+
+let secondIconClickAudio: HTMLAudioElement | null = null;
+
+function playSecondIconClickSound() {
+  if (!secondIconClickAudio) {
+    secondIconClickAudio = new Audio("/sound%20on%20click%202.mp3");
+    secondIconClickAudio.preload = "auto";
+    secondIconClickAudio.volume = 0.5;
+  }
+  secondIconClickAudio.currentTime = 0;
+  void secondIconClickAudio.play().catch(() => undefined);
+}
 
 const initialPositions: Record<ActiveSection, IconPosition> = {
   terminal:     { x: COL0, y: ROW0 },
@@ -351,7 +364,10 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
 
   const handleIconKeyDown = useCallback(
     (e: KeyboardEvent<HTMLButtonElement>, section: ActiveSection) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(section); }
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onOpen(section);
+      }
       if (e.key === "Escape") { selectedRef.current = new Set(); setSelected(new Set()); }
     }, [onOpen],
   );
@@ -386,10 +402,19 @@ function DesktopIconGrid({ onOpen }: { onOpen: (s: ActiveSection) => void }) {
             aria-pressed={isSelected}
             style={{ left: positions[section].x, top: positions[section].y }}
             onPointerDown={e => handleIconPointerDown(e, section)}
+            onMouseEnter={() => {
+              if (section === "about") playWakeSound();
+            }}
+            onMouseLeave={() => {
+              if (section === "about") playSnoreSound();
+            }}
             onPointerMove={handleIconPointerMove}
             onPointerUp={e => handleIconPointerUp(e, section)}
             onPointerCancel={e => handleIconPointerUp(e, section)}
-            onDoubleClick={() => onOpen(section)}
+            onDoubleClick={() => {
+              playSecondIconClickSound();
+              onOpen(section);
+            }}
             onClick={() => {
               // Click fallback for touch devices
               if (typeof window !== "undefined" && (window.innerWidth <= 900 || window.innerHeight <= 500)) {

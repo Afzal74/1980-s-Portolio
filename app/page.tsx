@@ -17,6 +17,8 @@ import { VirusOverlay } from "./components/VirusOverlay";
 import { WindowControls } from "./components/WindowControls";
 import { Chatbot } from "./components/Chatbot";
 import type { ActiveSection, Project } from "./components/types";
+import { playSnoreSound, playWakeSound } from "./lib/aboutAudio";
+import { playClickSound } from "./lib/clickAudio";
 
 const projects: Project[] = [
   {
@@ -100,6 +102,17 @@ export default function Home() {
   const [hasSplashPermission, setHasSplashPermission] = useState(false);
   const [isSplashExiting, setIsSplashExiting] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+
+  useEffect(() => {
+    const handleButtonClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("button")) {
+        playClickSound();
+      }
+    };
+    document.addEventListener("click", handleButtonClick, true);
+    return () => document.removeEventListener("click", handleButtonClick, true);
+  }, []);
 
   useEffect(() => {
     const images = preloadAssets.map((src) => {
@@ -560,8 +573,14 @@ export default function Home() {
                 descriptionRef={descriptionRef}
                 eyeOverlayRef={eyeOverlayRef}
                 isCharacterHovered={isCharacterHovered}
-                onCharacterEnter={() => setIsCharacterHovered(true)}
-                onCharacterLeave={() => setIsCharacterHovered(false)}
+                onCharacterEnter={() => {
+                  setIsCharacterHovered(true);
+                  playWakeSound();
+                }}
+                onCharacterLeave={() => {
+                  setIsCharacterHovered(false);
+                  playSnoreSound();
+                }}
               />
             )}
           </div>
