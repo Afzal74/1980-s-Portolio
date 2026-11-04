@@ -2610,6 +2610,107 @@ h1 {
   .music-volume {
     width: 48px !important;
   }
+}
+
+/* Unified compact landscape layout for mobile browsers and rotated fallback. */
+@media (max-width: 900px) and (max-height: 500px),
+  (max-width: 700px) and (orientation: portrait) {
+  .desktop-robo {
+    right: 0;
+    bottom: -18px;
+    width: min(22vh, 118px);
+    z-index: 26;
+  }
+
+  .chatbot-window {
+    right: max(112px, 20vw);
+    bottom: 42px;
+    width: min(280px, 44vw);
+    min-height: 185px;
+    height: min(68vh, 215px);
+    padding: 22px 17px 58px;
+  }
+
+  .chatbot-prompt {
+    margin: 2px 0 6px;
+    font-size: 14px;
+  }
+
+  .chatbot-messages {
+    max-height: 92px;
+    gap: 5px;
+    padding: 0 2px;
+  }
+
+  .chatbot-message {
+    max-width: 80%;
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .chatbot-form {
+    right: 17px;
+    bottom: 27px;
+    left: 17px;
+  }
+
+  .chatbot-form input {
+    padding: 5px;
+    font-size: 10px;
+  }
+
+  .taskbar {
+    bottom: 0;
+    height: 28px;
+    min-height: 28px;
+  }
+
+  .taskbar-recents {
+    max-width: calc(100% - 105px);
+    gap: 3px;
+  }
+
+  .taskbar-recent {
+    min-width: 104px;
+    height: 23px;
+    padding: 0 4px;
+    font-size: 9px;
+  }
+
+  .taskbar-tray {
+    height: 23px;
+    gap: 3px;
+    padding: 0 3px;
+    font-size: 9px;
+  }
+
+  .taskbar-settings {
+    width: 21px;
+    height: 21px;
+    font-size: 12px;
+  }
+
+  .taskbar time {
+    min-width: 48px;
+    font-size: 9px;
+  }
+
+  .portfolio-window {
+    max-width: calc(100% - 16px) !important;
+    max-height: calc(100% - 36px) !important;
+    margin: auto !important;
+  }
+
+  .window-body {
+    min-height: 0;
+    overflow: auto !important;
+  }
+
+  .desktop-icons {
+    max-width: 100%;
+    max-height: calc(100% - 28px);
+    overflow: hidden;
+  }
 
   /* ── Compact Contact ── */
   .contact-window .window-body {
@@ -3130,6 +3231,63 @@ h1 {
 
 .contact-submit:active:not(:disabled) {
   border-style: inset;
+}
+
+@media (max-width: 900px) and (max-height: 500px),
+  (max-width: 700px) and (orientation: portrait) {
+  .desktop-robo {
+    right: 0;
+    bottom: -18px;
+    width: min(22vh, 118px);
+  }
+
+  .chatbot-window {
+    right: max(112px, 20vw);
+    bottom: 42px;
+    width: min(280px, 44vw);
+    min-height: 185px;
+    height: min(68vh, 215px);
+    padding: 22px 17px 58px;
+  }
+
+  .chatbot-messages {
+    max-height: 92px;
+  }
+
+  .chatbot-form {
+    right: 17px;
+    bottom: 27px;
+    left: 17px;
+  }
+
+  .chatbot-form input {
+    padding: 5px;
+    font-size: 10px;
+  }
+
+  .portfolio-window {
+    max-width: calc(100% - 16px) !important;
+    max-height: calc(100% - 36px) !important;
+    margin: auto !important;
+  }
+
+  .window-body {
+    min-height: 0;
+    overflow: auto !important;
+  }
+
+  .taskbar {
+    bottom: 0;
+    height: 28px;
+    min-height: 28px;
+  }
+
+  .taskbar-recent {
+    min-width: 104px;
+    height: 23px;
+    padding: 0 4px;
+    font-size: 9px;
+  }
 }
 
 .contact-submit--sending {
